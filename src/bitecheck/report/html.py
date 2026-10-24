@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import html as H
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from .. import __version__
 from ..core import git
@@ -140,7 +140,7 @@ def render(plan: Plan, verdict: Verdict, cmd: str) -> str:
             hint = f"<div class='hint'>→ {_e(f.hint)}</div>" if f.hint and f.severity != INFO else ""
             parts.append(f"<div class='f {f.severity}'><code>{_e(f.probe)} · {_e(f.code)}</code><div>{_e(f.message)}</div>"
                          f"{'<ul>' + items + more + '</ul>' if items else ''}{hint}</div>")
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
     parts.append(f"<footer>bitecheck {_e(__version__)} · generated {ts} · execution evidence, no LLM judgement · "
                  "github.com/tejgokani/bitecheck</footer></main></body></html>")
     return "".join(parts)

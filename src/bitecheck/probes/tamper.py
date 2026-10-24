@@ -73,6 +73,7 @@ def run(plan: Plan, cfg: Config) -> ProbeResult:
                 assert_files.append(f"{d.path}: {r} assertion line(s) removed, {a} added")
             removed_asserts += r
             added_asserts += a
+        prev_added = None
         for ln, text in d.added:
             loc = f"{d.path}:{ln}: {text.strip()[:100]}"
             if is_test and _SKIP.search(text):
@@ -84,6 +85,10 @@ def run(plan: Plan, cfg: Config) -> ProbeResult:
                 suppress.append(loc)
             if _SWALLOW.search(text):
                 swallow.append(loc)
+            elif re.fullmatch(r"\s*(?:pass|\.\.\.)\s*", text) and prev_added is not None and prev_added[0] == ln - 1 and \
+                    re.match(r"\s*except\b[^:]*:\s*(?:#.*)?$", prev_added[1]):
+                swallow.append(f"{d.path}:{ln - 1}: {prev_added[1].strip()} pass")
+            prev_added = (ln, text)
             if is_harness and _GATE.search(text):
                 gate.append(loc)
         if is_harness:

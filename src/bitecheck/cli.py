@@ -319,7 +319,7 @@ def _clear_round(path: Path | None) -> None:
 def _render_plan(plan, cfg) -> str:
     out = ["bitecheck plan", f"  base  {plan.base[:12]}", f"  head  {plan.head_label}",
            f"  tests {cfg.test_cmd or '(none detected)'}", ""]
-    out.append(f"  code files ({len(plan.code_changes)}), {plan.changed_code_line_count} mutable changed line(s)")
+    out.append(f"  code files ({len(plan.code_changes)}), {plan.changed_code_line_count} changed line(s) in mutable languages")
     for c in plan.code_changes:
         n = len(plan.code_lines.get(c.path, ()))
         tag = f"{n} line(s)" if c.path in plan.code_lines else ("unsupported" if c.path in plan.unsupported else "-")
