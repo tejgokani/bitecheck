@@ -1,0 +1,27 @@
+# Hand-curated list of widely used PyPI distributions (bitecheck authors, MIT).
+# Used only for offline typosquat-distance checks; not exhaustive.
+aiohttp alembic anyio apache-airflow argon2-cffi arrow asgiref attrs autopep8 awscli azure-core azure-identity
+azure-storage-blob babel bcrypt beautifulsoup4 black bleach boto3 botocore cachetools celery certifi cffi chardet
+charset-normalizer click cloudpickle colorama coverage cryptography cython dask databricks-sdk dataclasses-json
+datasets decorator defusedxml deprecated dill distlib django djangorestframework dnspython docker docutils
+duckdb elasticsearch email-validator et-xmlfile exceptiongroup faker fastapi fastjsonschema filelock flake8
+flask flask-cors flask-sqlalchemy fonttools frozenlist fsspec gevent gitpython google-api-core
+google-api-python-client google-auth google-cloud-bigquery google-cloud-storage googleapis-common-protos
+gradio greenlet grpcio grpcio-tools gunicorn h11 h5py httpcore httptools httpx huggingface-hub hypothesis idna
+imageio importlib-metadata iniconfig ipykernel ipython isodate isort itsdangerous jax jedi jinja2 jmespath joblib
+jsonpatch jsonpointer jsonschema jupyter jupyterlab keras kiwisolver kubernetes langchain langchain-core
+langchain-openai lightgbm llvmlite lxml mako markdown markdown-it-py markupsafe marshmallow matplotlib mccabe
+mdurl mock more-itertools msgpack multidict mypy mypy-extensions nest-asyncio networkx nltk nodeenv numba numpy
+oauthlib openai openpyxl opencv-python opentelemetry-api opentelemetry-sdk orjson packaging pandas paramiko
+parso pathspec pendulum pexpect pillow pip platformdirs plotly pluggy poetry polars pre-commit prometheus-client
+prompt-toolkit protobuf psutil psycopg psycopg2 psycopg2-binary ptyprocess pyarrow pyasn1 pyasn1-modules
+pycodestyle pycparser pycryptodome pydantic pydantic-core pydantic-settings pyflakes pygments pyjwt pylint
+pymongo pymysql pynacl pyopenssl pyparsing pyproject-hooks pyright pyspark pytest pytest-asyncio pytest-cov
+pytest-mock pytest-xdist python-dateutil python-dotenv python-json-logger python-multipart pytz pyyaml pyzmq
+rapidfuzz redis regex requests requests-oauthlib requests-toolbelt rich rpds-py rsa ruamel-yaml ruff s3fs
+s3transfer safetensors scikit-image scikit-learn scipy seaborn selenium sentry-sdk setuptools shapely six
+smart-open sniffio snowflake-connector-python sortedcontainers soupsieve sphinx sqlalchemy sqlparse
+starlette statsmodels streamlit structlog sympy tabulate tenacity tensorboard tensorflow termcolor threadpoolctl
+tiktoken tokenizers toml tomli tomlkit toolz torch torchvision tornado tqdm traitlets transformers typer
+types-requests typing-extensions typing-inspect tzdata ujson urllib3 uvicorn uvloop virtualenv watchdog
+wcwidth websocket-client websockets werkzeug wheel wrapt xgboost xlrd xmltodict yarl zipp

@@ -1,0 +1,7 @@
+# Hand-curated list of widely used crates (bitecheck authors, MIT). Offline typosquat checks only.
+ahash aho-corasick anyhow arrayvec async-trait axum base64 bitflags byteorder bytes cc cfg-if chrono clap
+crossbeam crossbeam-channel csv dashmap derive_more digest dirs either env_logger futures futures-util getrandom
+glob hashbrown heck hex http hyper indexmap itertools itoa lazy_static libc log memchr mio nom num num-traits
+once_cell parking_lot percent-encoding pin-project proc-macro2 quote rand rand_core rayon regex reqwest ring
+rustls ryu semver serde serde_derive serde_json sha2 slab smallvec socket2 syn tempfile thiserror time tokio
+tokio-util toml tower tracing tracing-subscriber unicode-ident url uuid walkdir winapi zeroize
