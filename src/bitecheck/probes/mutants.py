@@ -134,7 +134,7 @@ def run(plan: Plan, cfg: Config, ws: Workspace, progress=None, baseline: RunResu
         _tally(report)
         return report
 
-    per_timeout = max(10.0, baseline.duration * cfg.mutant_timeout_factor + 5.0)
+    per_timeout = max(cfg.min_mutant_timeout, baseline.duration * cfg.mutant_timeout_factor + 5.0)
     jobs = max(1, min(cfg.effective_jobs, len(mutants)))
     report.jobs = jobs
     trees = []

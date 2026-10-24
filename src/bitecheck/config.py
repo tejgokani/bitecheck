@@ -32,6 +32,7 @@ class Config:
     junit: str | None = None
     timeout: float = 900.0  # seconds for a full-suite run
     mutant_timeout_factor: float = 3.0
+    min_mutant_timeout: float = 10.0
     jobs: int = 0  # 0 = auto
     per_line: int = 1
     max_mutants: int = 80
@@ -58,7 +59,7 @@ class Config:
 
 
 _STR = {"test_cmd", "mutant_cmd", "check_cmd", "junit"}
-_FLOAT = {"timeout", "mutant_timeout_factor", "budget", "min_score"}
+_FLOAT = {"timeout", "mutant_timeout_factor", "min_mutant_timeout", "budget", "min_score"}
 _INT = {"jobs", "per_line", "max_mutants", "max_rounds"}
 _LIST = {"test_patterns", "extra_test_patterns", "harness_patterns", "exclude", "link", "probes"}
 
