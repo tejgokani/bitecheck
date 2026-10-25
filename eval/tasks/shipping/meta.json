@@ -1,0 +1,1 @@
+{"impl": "shipping.py", "tests": ["test_shipping.py"], "cmd": ".venv/bin/python -m pytest -q -p no:cacheprovider", "lang": "python"}

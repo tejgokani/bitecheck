@@ -1,0 +1,98 @@
+name: bitecheck
+description: >-
+  Verify a pull request with execution evidence: deliberately break the changed lines and see whether any
+  test notices, run the original tests against the new code, and flag shortcuts like skipped tests.
+author: Tej Gokani
+branding:
+  icon: check-circle
+  color: green
+
+inputs:
+  test-command:
+    description: "Test command (default: .bitecheck.toml test_cmd, or auto-detected)"
+    required: false
+    default: ""
+  base:
+    description: "Base revision (default: the pull request base, or HEAD~1 on push)"
+    required: false
+    default: ""
+  min-score:
+    description: Minimum share of deliberately broken changed lines the tests must catch (0-1)
+    required: false
+    default: ""
+  max-mutants:
+    description: Cap on mutants (default 80)
+    required: false
+    default: ""
+  probes:
+    description: Comma list of probes (mutants,goalpost,tamper,deps)
+    required: false
+    default: "mutants,goalpost,tamper,deps"
+  online:
+    description: Let the deps probe query PyPI/npm/crates.io for new dependencies
+    required: false
+    default: "false"
+  upload-sarif:
+    description: Upload SARIF so unchecked lines appear inline in the PR (needs security-events write)
+    required: false
+    default: "true"
+  version:
+    description: bitecheck version or git ref to install
+    required: false
+    default: "main"
+
+outputs:
+  score:
+    description: Share of deliberately broken changed lines caught by the tests
+    value: ${{ steps.run.outputs.score }}
+  verdict:
+    description: ok, warn or error
+    value: ${{ steps.run.outputs.verdict }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install bitecheck
+      shell: bash
+      run: python3 -m pip install --quiet "git+https://github.com/tejgokani/bitecheck@${{ inputs.version }}"
+    - name: Run bitecheck
+      id: run
+      shell: bash
+      env:
+        BC_CMD: ${{ inputs.test-command }}
+        BC_BASE: ${{ inputs.base }}
+        BC_MIN: ${{ inputs.min-score }}
+        BC_MAX: ${{ inputs.max-mutants }}
+        BC_PROBES: ${{ inputs.probes }}
+        BC_ONLINE: ${{ inputs.online }}
+        BC_PR_BASE: ${{ github.event.pull_request.base.sha }}
+      run: |
+        set +e
+        base="${BC_BASE:-${BC_PR_BASE:-HEAD~1}}"
+        args=(--base "$base" --head HEAD --probes "$BC_PROBES" --no-transcript
+              --json --markdown bitecheck.md --sarif bitecheck.sarif --html bitecheck.html)
+        [ -n "$BC_CMD" ] && args+=(--cmd "$BC_CMD")
+        [ -n "$BC_MIN" ] && args+=(--min-score "$BC_MIN")
+        [ -n "$BC_MAX" ] && args+=(--max-mutants "$BC_MAX")
+        [ "$BC_ONLINE" = "true" ] && args+=(--online)
+        bitecheck "${args[@]}" > bitecheck.json
+        code=$?
+        cat bitecheck.md >> "$GITHUB_STEP_SUMMARY"
+        python3 -c "import json;d=json.load(open('bitecheck.json'));print('score=%s' % ('' if d['score'] is None else round(d['score'],4)));print('verdict='+d['verdict'])" >> "$GITHUB_OUTPUT"
+        echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+    - name: Upload SARIF
+      if: inputs.upload-sarif == 'true' && always()
+      uses: github/codeql-action/upload-sarif@v3
+      continue-on-error: true
+      with:
+        sarif_file: bitecheck.sarif
+        category: bitecheck
+    - name: Upload HTML report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: bitecheck-report
+        path: bitecheck.html
+    - name: Fail on findings
+      shell: bash
+      run: exit ${{ steps.run.outputs.exit_code }}

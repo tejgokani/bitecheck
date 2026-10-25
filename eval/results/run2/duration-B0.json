@@ -1,0 +1,32 @@
+{
+  "task": "duration",
+  "arm": "B",
+  "rep": 0,
+  "model": "claude-haiku-5-5",
+  "tasks": "tasks2",
+  "exit": 0,
+  "seconds": 28.3,
+  "cost_usd": 0.012146750000000001,
+  "turns": 10,
+  "hook_runs": 0,
+  "hook_blocks": 0,
+  "hook_rounds": 0,
+  "final_message": "I implemented `parseDuration(text)` in `duration.mjs` and added tests in `duration.test.mjs`. `node --test` passes all 14 tests.\n\n- **Implementation:** the input is trimmed, then matched against one regex that allows optional `NNh`, `NNm`, `NNs` groups in that order. Empty or whitespace-only input is rejected, and so is anything that doesn't match the pattern. Non-string input also throws a `TypeError`. Missing components default to 0 and the result is `h*3600 + m*60 + s`.\n- **Tests:** they cover single and combined units, zero components, surrounding whitespace, and each rejection case from TASK.md: empty input, unknown units, decimals, negatives, repeated and out-of-order units, a number without a unit, and inner whitespace.\n\nI kept the existing `is exported` test and didn't change anything else.",
+  "impl_correct": true,
+  "agent_tests": 14,
+  "agent_tests_failing_on_reference": [],
+  "tests_valid_on_reference": true,
+  "bugs_caught": {
+    "1_minutes_600": true,
+    "2_no_trim": true,
+    "3_empty_is_zero": true,
+    "4_hours_ignored": true,
+    "5_any_order": true
+  },
+  "bugs_caught_n": 5,
+  "bitecheck_score": 1.0,
+  "bitecheck_verdict": "ok",
+  "mutants": 3,
+  "red_flags": [],
+  "test_lines": 80
+}

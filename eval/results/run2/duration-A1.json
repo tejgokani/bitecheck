@@ -1,0 +1,32 @@
+{
+  "task": "duration",
+  "arm": "A",
+  "rep": 1,
+  "model": "claude-haiku-5-5",
+  "tasks": "tasks2",
+  "exit": 0,
+  "seconds": 22.9,
+  "cost_usd": 0.011061450000000002,
+  "turns": 10,
+  "hook_runs": 0,
+  "hook_blocks": 0,
+  "hook_rounds": 0,
+  "final_message": "I implemented `parseDuration(text)` in `duration.mjs` and added tests to `duration.test.mjs`. `node --test` passes all 14 tests.\n\n- **Implementation:** the input is trimmed, then matched against one regex with optional `h`, `m`, `s` groups in that order. Each group is an integer, so repeated, out-of-order, decimal, negative or unitless input fails to match. An empty string is rejected even though the regex would match it. Non-string input throws a `TypeError`. Valid input returns `h*3600 + m*60 + s`.\n- **Tests:** the existing \"is exported\" test is kept. The new tests cover single and combined units, zero-valued units like `\"1h0m5s\"`, surrounding whitespace, and each rejection rule from TASK.md.\n\nWhitespace between units (e.g. `\"1h 30m\"`) is rejected. TASK.md says only surrounding whitespace is ignored, so I read that as the intent.",
+  "impl_correct": true,
+  "agent_tests": 14,
+  "agent_tests_failing_on_reference": [],
+  "tests_valid_on_reference": true,
+  "bugs_caught": {
+    "1_minutes_600": true,
+    "2_no_trim": true,
+    "3_empty_is_zero": true,
+    "4_hours_ignored": true,
+    "5_any_order": true
+  },
+  "bugs_caught_n": 5,
+  "bitecheck_score": 1.0,
+  "bitecheck_verdict": "ok",
+  "mutants": 3,
+  "red_flags": [],
+  "test_lines": 77
+}

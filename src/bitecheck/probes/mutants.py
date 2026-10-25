@@ -67,6 +67,7 @@ class MutationReport:
     error: str | None = None  # set when the probe could not run at all
     truncated: int = 0  # mutants dropped by max_mutants
     elapsed: float = 0.0
+    unloaded: dict[str, str] = field(default_factory=dict)  # files whose canary survived
 
     @property
     def counted(self) -> list[MutantResult]:
@@ -135,6 +136,24 @@ def run(plan: Plan, cfg: Config, ws: Workspace, progress=None, baseline: RunResu
         return report
 
     per_timeout = max(cfg.min_mutant_timeout, baseline.duration * cfg.mutant_timeout_factor + 5.0)
+
+    # Canary: break each mutated file outright. If the suite still passes, no test
+    # loads this copy of the file (untested file, or an editable install / absolute
+    # path importing the user's checkout), so its mutants cannot be judged.
+    dead_files: dict[str, str] = {}
+    for path in sorted({m.path for m in mutants}):
+        say(f"mutants: canary run for {path}")
+        if not _canary_killed(head, path, cmd, per_timeout, ws.logs / "canary.log"):
+            dead_files[path] = "the test suite still passes with this file deliberately broken: no test loads it"
+    if dead_files:
+        report.unloaded = dead_files
+        skipped = [m for m in mutants if m.path in dead_files]
+        mutants = [m for m in mutants if m.path not in dead_files]
+        report.results += [MutantResult(m, SKIPPED, note="file not loaded by any test") for m in skipped]
+        if not mutants:
+            report.elapsed = time.monotonic() - start
+            _tally(report)
+            return report
     jobs = max(1, min(cfg.effective_jobs, len(mutants)))
     report.jobs = jobs
     trees = []
@@ -183,7 +202,7 @@ def run(plan: Plan, cfg: Config, ws: Workspace, progress=None, baseline: RunResu
         from ..core.runner import kill_all
         kill_all()
         raise
-    report.results = [results.get(m.id) or MutantResult(m, SKIPPED) for m in mutants]
+    report.results += [results.get(m.id) or MutantResult(m, SKIPPED) for m in mutants]
     report.elapsed = time.monotonic() - start
     _tally(report)
     return report
@@ -222,6 +241,30 @@ def _run_one(m: mutators.Mutant, tree: Path, cfg: Config, cmd: str, timeout: flo
             except junit.JUnitError:
                 pass
         return MutantResult(m, KILLED, res.duration, killed_by=killed_by[:5])
+    finally:
+        write_text(fpath, original)
+
+
+_CANARY = {
+    "python": "raise SystemExit('bitecheck canary: this file was deliberately broken')\n",
+    "ruby": "raise 'bitecheck canary'\n",
+}
+
+
+def _canary_killed(tree: Path, path: str, cmd: str, timeout: float, log: Path) -> bool:
+    """True if breaking `path` makes the test command fail (i.e. tests load it)."""
+    spec = lexer.spec_for(path)
+    fpath = tree / path
+    original = read_text(fpath)
+    if spec is not None and spec.family in _CANARY:
+        broken = _CANARY[spec.family] + original
+    else:
+        # A line no C-family parser accepts, at the top of the file.
+        broken = "@@@ bitecheck canary: deliberately broken @@@ ((\n" + original
+    try:
+        write_text(fpath, broken)
+        res = run_command(cmd, tree, "canary", timeout, log)
+        return not res.passed
     finally:
         write_text(fpath, original)
 

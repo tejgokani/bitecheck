@@ -184,3 +184,27 @@ def test_plan_command(cart):
     proc = run_bc(cart, "plan", "--cmd", PYTEST)
     assert proc.returncode == 0
     assert "cart.py  [9 line(s)]" in proc.stdout and "test_cart.py" in proc.stdout
+
+
+def test_canary_detects_files_no_test_loads(tmp_path):
+    repo = make_repo(tmp_path, {"used.py": "def f():\n    return 1\n", "unused.py": "def g():\n    return 1\n",
+                                "test_used.py": "from used import f\n\n\ndef test_f():\n    assert f() == 1\n"})
+    write(repo, {"used.py": "def f():\n    return 1 + 1\n", "unused.py": "def g():\n    return 2 + 2\n",
+                 "test_used.py": "from used import f\n\n\ndef test_f():\n    assert f() == 2\n"})
+    _, doc = check_json(repo, "--probes", "mutants")
+    m = probe(doc, "mutants")
+    assert "FILES_NOT_LOADED" in {f["code"] for f in m["findings"]}
+    statuses = {x["path"]: x["status"] for x in m["mutation"]["mutants"]}
+    assert statuses["unused.py"] == "skipped" and statuses["used.py"] == "killed"
+    assert m["mutation"]["score"] == 1.0  # skipped files are not silently counted as survivors
+
+
+def test_editable_install_does_not_fake_survivors(tmp_path):
+    """Regression: tests importing the user's checkout (editable install) instead of the snapshot."""
+    repo = make_repo(tmp_path, {"src/pkg/__init__.py": "def f(x):\n    return x\n",
+                                "tests/test_pkg.py": "from pkg import f\n\n\ndef test_f():\n    assert f(2) == 2\n"})
+    write(repo, {"src/pkg/__init__.py": "def f(x):\n    return x * 3\n",
+                 "tests/test_pkg.py": "from pkg import f\n\n\ndef test_f():\n    assert f(2) == 6\n"})
+    # Simulate an editable install: the user's PYTHONPATH points at the real checkout.
+    _, doc = check_json(repo, "--probes", "mutants", env={"PYTHONPATH": str(repo / "src")})
+    assert probe(doc, "mutants")["mutation"]["score"] == 1.0

@@ -1,0 +1,30 @@
+[start] duration-B0
+[start] backoff-A0
+[start] duration-A0
+[start] backoff-B0
+[done]  duration-A0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 21.5s
+[start] password-A0
+[done]  duration-B0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 24.0s
+[start] password-B0
+[done]  password-A0: bugs 0/5 valid=False impl=True bitecheck=1.0 rounds=0 25.5s
+[start] shipping-A0
+[done]  password-B0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 30.1s
+[start] shipping-B0
+[done]  shipping-A0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 30.2s
+[done]  shipping-B0: bugs 0/5 valid=False impl=True bitecheck=1.0 rounds=0 29.0s
+[done]  backoff-B0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 33.8s
+[done]  backoff-A0: bugs 0/5 valid=False impl=True bitecheck=1.0 rounds=0 34.2s
+| task | arm | held-out bugs caught | tests valid | impl correct | bitecheck score | rounds | time | cost |
+|---|---|---|---|---|---|---|---|---|
+| backoff | A | 0/5 | False | True | 100% | 0 | 34s | $0.20 |
+| backoff | B | 5/5 | True | True | 100% | 0 | 34s | $0.21 |
+| duration | A | 5/5 | True | True | 100% | 0 | 22s | $0.16 |
+| duration | B | 5/5 | True | True | 100% | 0 | 24s | $0.17 |
+| password | A | 0/5 | False | True | 100% | 0 | 26s | $0.19 |
+| password | B | 5/5 | True | True | 100% | 0 | 30s | $0.22 |
+| shipping | A | 5/5 | True | True | 100% | 0 | 30s | $0.21 |
+| shipping | B | 0/5 | False | True | 100% | 0 | 29s | $0.20 |
+
+arm A: 10/20 held-out bugs caught (50%), impl correct 4/4
+
+arm B: 15/20 held-out bugs caught (75%), impl correct 4/4

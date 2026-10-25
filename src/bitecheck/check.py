@@ -86,10 +86,16 @@ def _mutation_result(plan: Plan, cfg: Config, rep: mutants_probe.MutationReport)
     if rep.error:
         f.append(Finding(name, "MUTANTS_NOT_JUDGED", WARN, rep.error))
         return ProbeResult(name, "ran", "not judged", f, data=rep, elapsed=rep.elapsed)
+    if plan.unsupported:
+        f.append(Finding(name, "UNSUPPORTED_LANGUAGE", INFO, "changed code in languages bitecheck cannot mutate yet",
+                         plan.unsupported))
+    if rep.unloaded:
+        f.append(Finding(name, "FILES_NOT_LOADED", WARN,
+                         "changed files that no test loads: the suite still passes when they are deliberately "
+                         "broken, so their lines were not judged", [f"{p}: {why}" for p, why in rep.unloaded.items()],
+                         hint="add tests that import and exercise these files (or check for an editable install "
+                              "or absolute path that bypasses the copy under test)"))
     if not rep.results:
-        if plan.unsupported:
-            f.append(Finding(name, "UNSUPPORTED_LANGUAGE", INFO, "changed code in languages bitecheck cannot mutate yet",
-                             plan.unsupported))
         f.append(Finding(name, "NOTHING_TO_MUTATE", INFO, "no changed lines of supported code to mutate"))
         return ProbeResult(name, "ran", "nothing to mutate", f, data=rep, elapsed=rep.elapsed)
     counted = rep.counted
@@ -97,30 +103,27 @@ def _mutation_result(plan: Plan, cfg: Config, rep: mutants_probe.MutationReport)
     score = rep.score
     if rep.survivors:
         sev = ERROR if score is not None and score < cfg.min_score else WARN
-        items = []
-        for r in rep.survivors:
-            m = r.mutant
-            items.append(f"{m.path}:{m.line}  {m.describe()}")
+        items = [f"{r.mutant.path}:{r.mutant.line}  {r.mutant.describe()}" for r in rep.survivors]
         f.append(Finding(
             name, "LINES_UNCHECKED", sev,
             f"{len(rep.survivors)} changed line(s) can be broken without any test failing "
             f"({killed}/{len(counted)} caught, {score:.0%}; gate {cfg.min_score:.0%})",
-            items,
-            hint="for each line, add or strengthen a test assertion that fails when that line is wrong"))
+            items, hint="for each line, add or strengthen a test assertion that fails when that line is wrong"))
     invalid = [r for r in rep.results if r.status == mutants_probe.INVALID]
     if invalid:
-        f.append(Finding(name, "INVALID_MUTANTS", INFO, f"{len(invalid)} mutant(s) did not compile and were not "
-                         "counted"))
-    skipped = [r for r in rep.results if r.status == mutants_probe.SKIPPED]
+        f.append(Finding(name, "INVALID_MUTANTS", INFO, f"{len(invalid)} mutant(s) did not compile and were not counted"))
+    skipped = [r for r in rep.results if r.status == mutants_probe.SKIPPED and r.note != "file not loaded by any test"]
     if skipped:
         f.append(Finding(name, "MUTANTS_SKIPPED", WARN, f"{len(skipped)} mutant(s) were not run (time budget)"))
     if rep.truncated:
         f.append(Finding(name, "MUTANTS_CAPPED", INFO, f"{rep.truncated} more mutant(s) exist beyond max_mutants "
                          f"({cfg.max_mutants}); run with --max-mutants 0 for all"))
-    if plan.unsupported:
-        f.append(Finding(name, "UNSUPPORTED_LANGUAGE", INFO, "changed code in languages bitecheck cannot mutate yet",
-                         plan.unsupported))
-    summary = f"{killed}/{len(counted)} caught ({score:.0%})" if score is not None else "no countable mutants"
+    if score is not None:
+        summary = f"{killed}/{len(counted)} caught ({score:.0%})"
+    elif rep.unloaded:
+        summary = "changed files are not loaded by any test"
+    else:
+        summary = "no countable mutants"
     return ProbeResult(name, "ran", summary, f, data=rep, elapsed=rep.elapsed)
 
 

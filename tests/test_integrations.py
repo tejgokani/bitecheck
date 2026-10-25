@@ -194,3 +194,33 @@ def test_explain_and_version():
 def test_no_changes(cart):
     proc = run_bc(cart, "--cmd", PYTEST, "--json", "--no-transcript")
     assert proc.returncode == 0 and json.loads(proc.stdout)["verdict"] == "ok"
+
+
+def test_hook_skips_already_verified_change(cart, tmp_path):
+    write(cart, {"cart.py": CART_FEATURE, "test_cart.py": CART_TEST_V1 + STRONG_TEST})
+    log = tmp_path / "hooks.jsonl"
+    payload = {"hook_event_name": "Stop", "session_id": "cache-1", "cwd": str(cart), "stop_hook_active": False}
+    env = {**ENV, "BITECHECK_HOOK_LOG": str(log)}
+    first = run_bc(cart, "hook", "--cmd", PYTEST, stdin=json.dumps(payload), env=env)
+    assert first.returncode == 0 and len(log.read_text().splitlines()) == 1
+    second = run_bc(cart, "hook", "--cmd", PYTEST, stdin=json.dumps(payload), env=env)
+    assert second.returncode == 0 and "already verified" in second.stderr
+    assert len(log.read_text().splitlines()) == 1  # no second verification
+    write(cart, {"cart.py": CART_FEATURE + "\n"})  # any change invalidates the cache
+    third = run_bc(cart, "hook", "--cmd", PYTEST, stdin=json.dumps(payload), env=env)
+    assert "already verified" not in third.stderr and len(log.read_text().splitlines()) == 2
+
+
+def test_hook_never_blocks_on_missing_test_command(tmp_path):
+    repo = make_repo(tmp_path, {"notes.txt": "a\n", "lib.py": "x = 1\n"})
+    write(repo, {"lib.py": "x = 2\n"})
+    proc = run_bc(repo, "hook", stdin=json.dumps({"hook_event_name": "Stop", "session_id": "nt", "cwd": str(repo)}),
+                  env=ENV)
+    assert proc.returncode == 0 and "not verifying" in proc.stderr
+
+
+def test_non_blocking_feedback_header(cart):
+    write(cart, {"cart.py": CART_FEATURE, "test_cart.py": CART_TEST_V1 + STRONG_TEST + "\n\ndef test_skip():\n"
+                 "    import pytest\n    pytest.skip('later')\n"})
+    proc = run_bc(cart, "--cmd", PYTEST, "--feedback", "--no-transcript")
+    assert proc.returncode == 0 and "do not block" in proc.stdout and "not done yet" not in proc.stdout

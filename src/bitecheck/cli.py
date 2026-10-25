@@ -221,6 +221,9 @@ def _run(command: str, args) -> int:
 
     round_no, state_path = None, None
     if hook:
+        if _already_verified(plan, cfg, probes):
+            print("bitecheck: this exact change was already verified; nothing to do.", file=err)
+            return EXIT_OK
         round_no, state_path = _hook_round(hook_data)
         if round_no > cfg.max_rounds:
             print(f"bitecheck: {cfg.max_rounds} verification round(s) already used this session; "
@@ -242,17 +245,26 @@ def _run(command: str, args) -> int:
 
     failed = verdict.failed(strict=args.strict)
     if hook:
+        codes = {f.code for f in verdict.findings if f.severity == "error"}
+        if codes and codes <= UNFIXABLE_BY_AGENT:
+            # The agent cannot fix bitecheck's configuration; never trap it in a loop over that.
+            _hook_log(hook_data, plan, verdict, round_no, False)
+            print("bitecheck: not verifying: " + "; ".join(f.message for f in verdict.findings
+                                                           if f.code in UNFIXABLE_BY_AGENT), file=err)
+            return EXIT_OK
+        _hook_log(hook_data, plan, verdict, round_no, failed)
         if failed:
             _save_round(state_path, round_no)
             print(feedback.render(plan, verdict, round_no, cfg.max_rounds), file=err)
             return EXIT_HOOK_BLOCK
         _clear_round(state_path)
-        print(feedback.render(plan, verdict), file=err)
+        _save_verified(plan, cfg, probes)
+        print(feedback.render(plan, verdict, blocking=False), file=err)
         return EXIT_OK
     if args.json:
         print(jsonout.render(plan, verdict, cfg.test_cmd))
     elif args.feedback:
-        print(feedback.render(plan, verdict))
+        print(feedback.render(plan, verdict, blocking=failed))
     else:
         print(text.render(plan, verdict, cfg.test_cmd, sys.stdout, args.verbose, workdir))
     return EXIT_FAIL if failed else EXIT_OK
@@ -279,6 +291,65 @@ def _message(args, hook_data: dict, repo: Path, wanted: bool) -> transcripts.Age
     if args.no_transcript:
         return None
     return transcripts.latest_session(repo)
+
+
+def _hook_log(data: dict, plan, verdict, round_no, blocked: bool) -> None:
+    """Append one JSON line per hook run to $BITECHECK_HOOK_LOG (an audit trail)."""
+    target = os.environ.get("BITECHECK_HOOK_LOG")
+    if not target:
+        return
+    import time as _t
+    rec = {"time": _t.strftime("%Y-%m-%dT%H:%M:%S%z"), "session_id": data.get("session_id"),
+           "event": data.get("hook_event_name"), "repo": str(plan.repo), "round": round_no, "blocked": blocked,
+           "verdict": verdict.worst, "score": verdict.score,
+           "findings": sorted({f.code for f in verdict.findings if f.severity in ("error", "warn")})}
+    try:
+        with open(target, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(rec) + "\n")
+    except OSError:
+        pass
+
+
+UNFIXABLE_BY_AGENT = {"NO_TEST_COMMAND"}
+
+
+def _fingerprint(plan, cfg, probes) -> str:
+    """Hash of everything that determines the verdict: the diff, untracked files, config and probes."""
+    import hashlib
+    h = hashlib.sha256()
+    h.update(plan.base.encode())
+    h.update(json.dumps([cfg.test_cmd, cfg.effective_mutant_cmd, cfg.min_score, cfg.per_line, sorted(probes)]).encode())
+    args = ["diff", "--no-color", "--binary", plan.base] + ([] if plan.head == git.WORKTREE else [plan.head])
+    h.update(git._git(plan.repo, *args))
+    if plan.head == git.WORKTREE:
+        for ch in plan.changes:
+            if ch.status == "A":
+                data = git.read_head_file(plan.repo, plan.head, ch.path)
+                h.update(ch.path.encode() + b"\0" + (data or b""))
+    return h.hexdigest()
+
+
+def _verified_path(plan) -> Path:
+    import hashlib
+    return _state_dir() / f"verified-{hashlib.sha256(str(plan.repo).encode()).hexdigest()[:16]}"
+
+
+def _already_verified(plan, cfg, probes) -> bool:
+    if not plan.changes:
+        return False
+    try:
+        return _verified_path(plan).read_text() == _fingerprint(plan, cfg, probes)
+    except (OSError, git.GitError):
+        return False
+
+
+def _save_verified(plan, cfg, probes) -> None:
+    if not plan.changes:
+        return
+    try:
+        _verified_path(plan).write_text(_fingerprint(plan, cfg, probes))
+    except (OSError, git.GitError):
+        pass
 
 
 def _state_dir() -> Path:

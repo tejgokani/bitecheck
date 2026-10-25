@@ -154,3 +154,13 @@ def test_no_message_skips_claims(cart):
     _, doc = check_json(cart, "--probes", "claims")
     assert probe(doc, "claims")["status"] == "skipped"
     assert git  # keep import
+
+
+def test_special_case_explained_by_spec_is_not_flagged(cart):
+    """Regression: `if zone == "domestic": return 0.0` is a documented rule, not a hard-coded answer."""
+    write(cart, {"SPEC.md": "Domestic parcels under 1kg ship free.\nzones: domestic\n",
+                 "cart.py": CART_V1 + "\ndef ship(zone):\n    if zone == 'domestic':\n        return 0.0\n    return 9.5\n",
+                 "test_cart.py": CART_TEST_V1 + "\n\ndef test_ship():\n    from cart import ship\n"
+                                 "    assert ship('domestic') == 0.0\n"})
+    _, doc = check_json(cart, "--probes", "tamper")
+    assert "SPECIAL_CASE_SUSPECT" not in codes(doc)

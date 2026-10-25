@@ -1,0 +1,54 @@
+[start] backoff-A0
+[start] duration-B0
+[start] backoff-B0
+[start] duration-A0
+[done]  duration-B0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 28.3s
+[done]  duration-A0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 28.2s
+[start] password-A0
+[start] password-B0
+[done]  password-A0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 24.1s
+[start] shipping-A0
+[done]  password-B0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 27.7s
+[start] shipping-B0
+[done]  shipping-A0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 32.7s
+[start] backoff-A1
+[done]  shipping-B0: bugs 4/5 valid=True impl=True bitecheck=1.0 rounds=0 31.0s
+[start] backoff-B1
+[done]  backoff-A1: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 28.6s
+[start] duration-A1
+[done]  duration-A1: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 22.9s
+[start] duration-B1
+[done]  duration-B1: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 25.5s
+[start] password-A1
+[done]  password-A1: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 27.6s
+[start] password-B1
+[done]  password-B1: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 26.0s
+[start] shipping-A1
+[done]  shipping-A1: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 32.6s
+[start] shipping-B1
+[done]  backoff-B0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 31.2s
+[done]  backoff-A0: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 35.1s
+[done]  shipping-B1: bugs 5/5 valid=False impl=True bitecheck=1.0 rounds=0 31.5s
+[done]  backoff-B1: bugs 5/5 valid=True impl=True bitecheck=1.0 rounds=0 33.6s
+| task | arm | held-out bugs caught | agent tests (failing on reference) | impl correct | bitecheck score | hook runs/blocks | time | cost |
+|---|---|---|---|---|---|---|---|---|
+| backoff | A | 5/5 | 21 (0) | True | 100% | 0/0 | 35s | $0.01 |
+| backoff | A | 5/5 | 20 (0) | True | 100% | 0/0 | 29s | $0.01 |
+| backoff | B | 5/5 | 19 (0) | True | 100% | 0/0 | 31s | $0.01 |
+| backoff | B | 5/5 | 21 (0) | True | 100% | 0/0 | 34s | $0.01 |
+| duration | A | 5/5 | 15 (0) | True | 100% | 0/0 | 28s | $0.01 |
+| duration | A | 5/5 | 14 (0) | True | 100% | 0/0 | 23s | $0.01 |
+| duration | B | 5/5 | 14 (0) | True | 100% | 0/0 | 28s | $0.01 |
+| duration | B | 5/5 | 12 (0) | True | 100% | 0/0 | 26s | $0.01 |
+| password | A | 5/5 | 11 (0) | True | 100% | 0/0 | 24s | $0.01 |
+| password | A | 5/5 | 11 (0) | True | 100% | 0/0 | 28s | $0.01 |
+| password | B | 5/5 | 12 (0) | True | 100% | 0/0 | 28s | $0.01 |
+| password | B | 5/5 | 12 (0) | True | 100% | 0/0 | 26s | $0.01 |
+| shipping | A | 5/5 | 25 (0) | True | 100% | 0/0 | 33s | $0.01 |
+| shipping | A | 5/5 | 24 (0) | True | 100% | 0/0 | 33s | $0.01 |
+| shipping | B | 4/5 | 19 (0) | True | 100% | 0/0 | 31s | $0.01 |
+| shipping | B | 5/5 | 27 (1) | True | 100% | 0/0 | 32s | $0.01 |
+
+arm A: 40/40 held-out bugs caught (100%), impl correct 8/8
+
+arm B: 39/40 held-out bugs caught (98%), impl correct 8/8

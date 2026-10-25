@@ -1,0 +1,14 @@
+from datetime import date, timedelta
+
+
+def business_days_between(start: date, end: date) -> int:
+    """Number of business days (Mon-Fri) from start (inclusive) to end (exclusive)."""
+    if end < start:
+        return -business_days_between(end, start)
+    days = 0
+    current = start
+    while current < end:
+        if current.weekday() < 5:
+            days += 1
+        current += timedelta(days=1)
+    return days

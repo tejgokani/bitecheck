@@ -12,9 +12,14 @@ MAX_SURVIVORS = 15
 
 
 def render(plan: Plan, verdict: Verdict, round_no: int | None = None, max_rounds: int | None = None,
-           tree: Path | None = None) -> str:
-    lines = ["bitecheck verified your change by re-running the tests and deliberately breaking the lines you "
-             "changed. It is not done yet. Fix the items below, then finish again.", ""]
+           tree: Path | None = None, blocking: bool = True) -> str:
+    if blocking:
+        head = ("bitecheck verified your change by re-running the tests and deliberately breaking the lines you "
+                "changed. It is not done yet. Fix the items below, then finish again.")
+    else:
+        head = ("bitecheck verified your change. It passes the gate; the items below are worth a look but do not "
+                "block.")
+    lines = [head, ""]
     n = 0
     mut = next((p for p in verdict.probes if p.name == "mutants"), None)
     if mut is not None and isinstance(mut.data, M.MutationReport) and mut.data.survivors:

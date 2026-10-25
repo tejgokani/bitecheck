@@ -51,6 +51,12 @@ def run_command(cmd: str, cwd: Path, variant: str, timeout: float, log_path: Pat
     env["BITECHECK_TREE"] = str(cwd)
     # Keep tools from writing caches back into the user's repo via env-configured paths.
     env.setdefault("PYTHONDONTWRITEBYTECODE", "1")
+    # Snapshot code must win over editable installs (.pth files pointing at the
+    # user's checkout), or mutants would be applied to code no test imports.
+    py_paths = [str(cwd / "src"), str(cwd)]
+    if env.get("PYTHONPATH"):
+        py_paths.append(env["PYTHONPATH"])
+    env["PYTHONPATH"] = os.pathsep.join(py_paths)
     if extra_env:
         env.update(extra_env)
     start = time.monotonic()

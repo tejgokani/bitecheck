@@ -120,6 +120,8 @@ def run(plan: Plan, cfg: Config) -> ProbeResult:
                           "correct rather than regenerated to pass", snaps))
     special = _special_cases(diffs, test_paths, test_added_text)
     if special:
+        special = _unexplained(plan, test_paths, special)
+    if special:
         findings.append(F("SPECIAL_CASE_SUSPECT", WARN,
                           "new code branches on a literal that also appears in the changed tests; this is how "
                           "agents hard-code the expected answer", special,
@@ -127,6 +129,53 @@ def run(plan: Plan, cfg: Config) -> ProbeResult:
     n_flags = len(findings)
     summary = "no red flags" if not n_flags else f"{n_flags} red flag type(s)"
     return ProbeResult(NAME, "ran", summary, findings, elapsed=time.monotonic() - start)
+
+
+def _repo_text(plan: Plan, skip: set[str], cap: int = 8_000_000) -> dict[str, str]:
+    """Head contents of non-test text files (docs, specs, other code), size-capped."""
+    if plan.head == git.WORKTREE:
+        names = git._split_z(git._git(plan.repo, "ls-files", "-c", "-o", "--exclude-standard", "-z"))
+    else:
+        names = git._split_z(git._git(plan.repo, "ls-tree", "-r", "-z", "--name-only", plan.head))
+    out: dict[str, str] = {}
+    total = 0
+    for name in names:
+        if name in skip or total > cap:
+            continue
+        data = git.read_head_file(plan.repo, plan.head, name)
+        if not data or len(data) > 256_000 or b"\0" in data[:4000]:
+            continue
+        total += len(data)
+        out[name] = data.decode("utf-8", errors="replace")
+    return out
+
+
+def _unexplained(plan: Plan, test_paths: set[str], flagged: list[str]) -> list[str]:
+    """Drop special-case suspects whose input literal is documented or used elsewhere.
+
+    `if zone == "domestic": return 0.0` is a business rule when "domestic" appears in
+    the spec or elsewhere in the code; `if year == 1900: return 29` is suspicious when
+    1900 appears nowhere but the tests and this one line.
+    """
+    corpus = _repo_text(plan, test_paths)
+    keep = []
+    for item in flagged:
+        m = re.search(r"\(input '([^']*)' and result", item)
+        path_line = item.split(":", 2)
+        lit = m.group(1) if m else None
+        if lit is None:
+            keep.append(item)
+            continue
+        pat = re.compile(rf"(?<![\w.]){re.escape(lit)}(?![\w.])")
+        hits = 0
+        for name, text in corpus.items():
+            n = len(pat.findall(text))
+            if name == path_line[0]:
+                n -= 1  # the suspicious line itself
+            hits += max(n, 0)
+        if hits == 0:
+            keep.append(item)
+    return keep
 
 
 def _lowered_thresholds(d: git.FileDiff) -> list[str]:
