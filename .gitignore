@@ -6,7 +6,7 @@ build/
 .pytest_cache/
 .ruff_cache/
 .claude/
-eval/results/**/*-[AB][0-9]/
+eval/results/*/*/
 eval/results/**/*.agent.jsonl
 eval/results/**/*.hooks.jsonl
 eval/results-*.log
