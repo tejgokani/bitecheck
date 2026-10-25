@@ -1,0 +1,36 @@
+{
+  "task": "median",
+  "arm": "B",
+  "rep": 1,
+  "model": "default",
+  "tasks": "tasks4",
+  "exit": 0,
+  "seconds": 54.8,
+  "cost_usd": 0.21476360000000003,
+  "turns": 12,
+  "hook_runs": 2,
+  "hook_blocks": 1,
+  "hook_rounds": 1,
+  "final_message": "I added tests to `stats_test.go`, and `go test ./...` passes. I haven't re-run bitecheck's mutation check, so I can't confirm the three uncaught changes are now caught.\n\n- **`TestMedian`** is a table test with exact expected values:\n  - Odd lengths: `{5,1,3,9,2}` gives 3 and `{3,1,2}` gives 2. Those would fail if `sorted[n/2]` used `3` instead of `2`.\n  - Even lengths: `{3,1,2,4}` gives 2.5, `{1,2}` gives 1.5 and `{10,2,8,4,6,12}` gives 7. Those would fail if the `/ 2` became `* 2` or `/ 3`.\n- **`TestMedianDoesNotReorderInput`** checks that the caller's slice is unchanged after `Median` runs. That covers the \"must not reorder\" requirement from the bug report.\n\nNone of the flagged changes looked equivalent to the original code, so I treated all three as real gaps.",
+  "impl_correct": true,
+  "agent_test_files": [
+    "stats_test.go"
+  ],
+  "agent_tests": 4,
+  "agent_tests_failing_on_reference": [],
+  "tests_valid_on_reference": true,
+  "bugs_caught": {
+    "1_original_bug": true,
+    "2_sorts_in_place": true,
+    "3_even_upper_middle": true,
+    "4_unsorted": true
+  },
+  "bugs_caught_n": 4,
+  "bugs_total": 4,
+  "regression_protected": true,
+  "bitecheck_score": 1.0,
+  "bitecheck_verdict": "ok",
+  "mutants": 7,
+  "red_flags": [],
+  "test_lines": 51
+}

@@ -115,3 +115,18 @@ Both were fixed with operator families and regex operators. Because those fixes 
 2. Arm B catches more held-out bugs in total.
 3. Fix correctness is the same in both arms (±1 run).
 4. Arm B's median wall time is under 3× arm A's.
+
+## Run 4 results (filled in after the run, nothing altered above)
+
+- **Arm A:** regression-protected 5/12; held-out 18/48 (38%); correctness 12/12; median 18s; total $1.94.
+- **Arm B:** regression-protected **12/12**; held-out **44/48 (92%)**; correctness 12/12; median 37s; total $2.29. The hook blocked 8 times, always once per run.
+
+All four expectations held. Where B did not improve (`bytes`), its mutation score of 88% cleared the 0.8 gate, so the hook never blocked.
+
+---
+
+# Run 2b (written before running)
+
+**Why.** Runs 1–2 never tested arm B because of the harness bug. This reruns **arm B only** for the run-2 setup (greenfield tasks, "Add tests.", `claude-haiku-5-5`, 2 repetitions) and compares against the existing run-2 arm-A data.
+
+**Expectation.** No meaningful difference. Arm A already caught 40/40 held-out bugs, a ceiling. This mainly checks that the hook does not make greenfield work worse or much slower.

@@ -1,0 +1,38 @@
+{
+  "task": "merge",
+  "arm": "B",
+  "rep": 0,
+  "model": "default",
+  "tasks": "tasks4",
+  "exit": 0,
+  "seconds": 43.2,
+  "cost_usd": 0.2208746,
+  "turns": 11,
+  "hook_runs": 2,
+  "hook_blocks": 1,
+  "hook_rounds": 1,
+  "final_message": "I added tests in `test_config.py` that cover the `and` \u2192 `or` mutant at `config.py:11`, and all 7 tests pass. I didn't re-run the mutation check myself, so I haven't confirmed the mutant is now caught.\n\nWith `or`, three cases would break, and each now has a test:\n- **Dict override on a missing key:** `test_dict_override_of_missing_key_is_added` would hit a `KeyError`.\n- **Dict override on a non-dict base value:** `test_dict_override_replaces_non_dict_base` would try to merge into a non-dict.\n- **Non-dict override on a dict base value:** `test_non_dict_override_replaces_dict_base` would try to merge a non-dict into a dict.\n\nI also added `test_nested_merged_recursively`, which checks a two-level merge and that neither input changes. `test_result_does_not_alias_inputs` covers the deep copying.\n\nThe `config.py` code is unchanged, and no existing tests were removed or weakened.",
+  "impl_correct": true,
+  "agent_test_files": [
+    "test_config.py"
+  ],
+  "agent_tests": 7,
+  "agent_tests_failing_on_reference": [
+    "test_config::test_result_does_not_alias_inputs"
+  ],
+  "tests_valid_on_reference": false,
+  "bugs_caught": {
+    "1_original_bug": true,
+    "2_one_level_only": true,
+    "3_mutates_base": true,
+    "4_dict_replaced_by_scalar_ignored": true
+  },
+  "bugs_caught_n": 4,
+  "bugs_total": 4,
+  "regression_protected": true,
+  "bitecheck_score": 1.0,
+  "bitecheck_verdict": "ok",
+  "mutants": 2,
+  "red_flags": [],
+  "test_lines": 41
+}

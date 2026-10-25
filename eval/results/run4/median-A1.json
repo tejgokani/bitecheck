@@ -1,0 +1,36 @@
+{
+  "task": "median",
+  "arm": "A",
+  "rep": 1,
+  "model": "default",
+  "tasks": "tasks4",
+  "exit": 0,
+  "seconds": 12.3,
+  "cost_usd": 0.1524451,
+  "turns": 5,
+  "hook_runs": 0,
+  "hook_blocks": 0,
+  "hook_rounds": 0,
+  "final_message": "I fixed `Median` in `stats.go`, but I couldn't run `go test ./...` to check it. The command needs approval, which wasn't granted in this session.\n\n`Median` now copies the input before sorting, so the caller's slice isn't reordered. For an even number of values it returns the mean of the two middle values, so `{3, 1, 2, 4}` should give 2.5. Odd-length input returns the middle element, and empty input still returns the \"empty input\" error.\n\nPlease run `go test ./...` yourself to confirm.",
+  "impl_correct": true,
+  "agent_test_files": [
+    "stats_test.go"
+  ],
+  "agent_tests": 2,
+  "agent_tests_failing_on_reference": [],
+  "tests_valid_on_reference": true,
+  "bugs_caught": {
+    "1_original_bug": false,
+    "2_sorts_in_place": false,
+    "3_even_upper_middle": false,
+    "4_unsorted": false
+  },
+  "bugs_caught_n": 0,
+  "bugs_total": 4,
+  "regression_protected": false,
+  "bitecheck_score": 0.42857142857142855,
+  "bitecheck_verdict": "error",
+  "mutants": 7,
+  "red_flags": [],
+  "test_lines": 15
+}

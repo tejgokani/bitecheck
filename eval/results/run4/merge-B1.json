@@ -1,0 +1,36 @@
+{
+  "task": "merge",
+  "arm": "B",
+  "rep": 1,
+  "model": "default",
+  "tasks": "tasks4",
+  "exit": 0,
+  "seconds": 40.9,
+  "cost_usd": 0.21022310000000002,
+  "turns": 11,
+  "hook_runs": 2,
+  "hook_blocks": 1,
+  "hook_rounds": 1,
+  "final_message": "I added tests to `test_config.py` that cover the `and` \u2192 `or` change at `config.py:11`, and all 8 tests pass. I haven't re-run the mutation check itself, so I haven't confirmed the `or` change now fails a test.\n\n- `test_non_dict_replaces_dict` and `test_dict_replaces_non_dict`: with `or`, each of these would call `merge` with a non-dict argument and crash instead of returning the replacement value.\n- `test_dict_added_for_missing_key`: with `or`, a dict value under a key missing from `base` would call `merge` on `None` and crash.\n- `test_nested_merge`, `test_deeply_nested_merge` and `test_nested_inputs_untouched`: these check your original example, merging at depth, and that editing the result leaves `base` and `override` unchanged.\n\nThe `or` change was not an equivalent mutant.",
+  "impl_correct": true,
+  "agent_test_files": [
+    "test_config.py"
+  ],
+  "agent_tests": 8,
+  "agent_tests_failing_on_reference": [],
+  "tests_valid_on_reference": true,
+  "bugs_caught": {
+    "1_original_bug": true,
+    "2_one_level_only": true,
+    "3_mutates_base": true,
+    "4_dict_replaced_by_scalar_ignored": true
+  },
+  "bugs_caught_n": 4,
+  "bugs_total": 4,
+  "regression_protected": true,
+  "bitecheck_score": 1.0,
+  "bitecheck_verdict": "ok",
+  "mutants": 2,
+  "red_flags": [],
+  "test_lines": 42
+}

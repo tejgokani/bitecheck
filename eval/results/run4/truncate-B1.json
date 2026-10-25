@@ -1,0 +1,36 @@
+{
+  "task": "truncate",
+  "arm": "B",
+  "rep": 1,
+  "model": "default",
+  "tasks": "tasks4",
+  "exit": 0,
+  "seconds": 48.3,
+  "cost_usd": 0.2104103,
+  "turns": 11,
+  "hook_runs": 2,
+  "hook_blocks": 1,
+  "hook_rounds": 1,
+  "final_message": "I added a table-driven `TestTruncate` to `text_test.go`. `go test ./...` passes with it. I did not re-run bitecheck's mutation check myself, so I haven't confirmed all four mutants are now caught. The table cases below should fail under those mutants, going by my reading of the code:\n\n- **`text.go:5` (`n < 1` \u2192 `n < 0`):** `Truncate(\"abc\", 0)` must return `\"\"`. With the mutant it would slice `r[:-1]` and panic.\n- **`text.go:9` (`<=` \u2192 `<`):** `Truncate(\"h\u00e9llo\", 5)` must come back unchanged. With the mutant it would become \"h\u00e9ll\u2026\".\n- **`text.go:12` (`n-1` \u2192 `n+1` or `n-0`):** `Truncate(\"h\u00e9llo w\u00f6rld\", 5)` must equal \"h\u00e9ll\u2026\", and `Truncate(\"abcdef\", 3)` must equal \"ab\u2026\". The mutants would give \"h\u00e9llo w\u00f6\u2026\" and \"h\u00e9llo\u2026\", and \"abcd\u2026\" and \"abc\u2026\".\n\nI also added cases for a negative `n`, an empty string and `n == 1` (which returns just \"\u2026\"). The existing test is unchanged. None of the four mutants looks equivalent.",
+  "impl_correct": true,
+  "agent_test_files": [
+    "text_test.go"
+  ],
+  "agent_tests": 2,
+  "agent_tests_failing_on_reference": [],
+  "tests_valid_on_reference": true,
+  "bugs_caught": {
+    "1_original_bug": true,
+    "2_cut_too_much": true,
+    "3_fits_truncated": true,
+    "4_n_zero_panics": true
+  },
+  "bugs_caught_n": 4,
+  "bugs_total": 4,
+  "regression_protected": true,
+  "bitecheck_score": 1.0,
+  "bitecheck_verdict": "ok",
+  "mutants": 6,
+  "red_flags": [],
+  "test_lines": 30
+}

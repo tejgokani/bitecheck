@@ -82,7 +82,24 @@ Every finding comes with evidence and a concrete fix. `bitecheck explain <CODE>`
 
 ## Evidence
 
-<!-- EVIDENCE -->
+I ran a pre-registered A/B experiment with Claude Code on **6 brand-new bug-fix tasks** (Python, JavaScript, Go). The tasks were written after the last change to bitecheck, and no agent had seen them. The prompt was just the bug report, with no mention of tests. Arm A is Claude Code alone. Arm B is Claude Code with `bitecheck install claude`. Everything else was identical.
+
+| 12 runs per arm | Claude Code alone | + bitecheck hook |
+|---|---|---|
+| **Bug fixes protected by a regression test**<br><sub>the final tests fail if the original bug comes back</sub> | 5 / 12 | **12 / 12** |
+| **Held-out bugs caught**<br><sub>hand-written buggy variants bitecheck never saw, run against the agent's final tests</sub> | 18 / 48 (38%) | **44 / 48 (92%)** |
+| Fix correct (hidden tests) | 12 / 12 | 12 / 12 |
+| Median time · total cost | 18 s · $1.94 | 37 s · $2.29 |
+
+- **The loop is short.** The hook sent the agent back 8 times, always for a single round. Each time it named the changed lines no test checked: an untested `raise` (paginate), `and` → `or` in the recursion guard (merge), the even-length average (median), the `<=` boundary (truncate). Each time, the agent added the missing tests.
+- **One task didn't improve.** On `bytes`, the agent's tests already caught 88% of mutants, which cleared the 80% gate. The hook didn't push, and both arms missed the same 2 held-out bugs.
+
+**What this does *not* show.**
+
+- n = 2 runs per task per arm, one model, and small tasks I wrote. It's an observation, not a powered study.
+- On greenfield "implement X and add thorough tests" tasks, Claude already wrote strong tests without help (40/40 held-out bugs caught), so there was nothing for bitecheck to add.
+
+**The full record** is in [`eval/PREREGISTRATION.md`](eval/PREREGISTRATION.md): expectations written before each run, a harness bug that invalidated two early runs, two product gaps that runs exposed (and their fixes), and the null results. You can reproduce it with [`eval/`](eval/README.md).
 
 ## Install
 
