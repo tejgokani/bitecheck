@@ -1,0 +1,36 @@
+{
+  "task": "reserve",
+  "arm": "B",
+  "rep": 0,
+  "model": "default",
+  "tasks": "tasks3",
+  "exit": 0,
+  "seconds": 19.3,
+  "cost_usd": 0.1450579,
+  "turns": 5,
+  "hook_runs": 1,
+  "hook_blocks": 0,
+  "hook_rounds": 0,
+  "final_message": "`reserve` in `inventory.py` now raises `InsufficientStock` when the requested quantity is more than `available(item)`. It checks before changing anything, so a failed request reserves nothing and `available()` can't go negative. Reserving exactly what's available still works.\n\nThe 3 existing tests pass. I didn't add a test for the over-reserve case.",
+  "impl_correct": true,
+  "agent_test_files": [
+    "test_inventory.py"
+  ],
+  "agent_tests": 3,
+  "agent_tests_failing_on_reference": [],
+  "tests_valid_on_reference": true,
+  "bugs_caught": {
+    "1_original_bug": false,
+    "2_exact_amount_rejected": false,
+    "3_reserves_before_check": false,
+    "4_ignores_existing_reservations": false
+  },
+  "bugs_caught_n": 0,
+  "bugs_total": 4,
+  "regression_protected": false,
+  "bitecheck_score": 1.0,
+  "bitecheck_verdict": "ok",
+  "mutants": 1,
+  "red_flags": [],
+  "test_lines": 22
+}

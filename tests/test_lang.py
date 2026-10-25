@@ -161,3 +161,19 @@ def test_unicode_offsets_python():
 
 def test_unparseable_file_yields_nothing():
     assert muts('x = "unterminated\n', ".go") == []
+
+
+def test_error_path_operators():
+    py = "def f(x):\n    if x < 0:\n        raise ValueError(x)\n    return x\n"
+    assert any(m.operator == "remove-raise" and m.apply(py).splitlines()[2].strip() == "pass" for m in muts(py, ".py"))
+    js = "function f(x) {\n  if (x < 0) {\n    throw new RangeError('neg');\n  }\n  return x;\n}\n"
+    assert any(m.operator == "remove-raise" and m.line == 3 for m in muts(js, ".js"))
+    go = 'func P(n int) (int, error) {\n\tif n < 1 {\n\t\treturn 0, fmt.Errorf("bad %d", n)\n\t}\n\treturn n, nil\n}\n'
+    drop = [m for m in muts(go, ".go") if m.operator == "drop-error"]
+    assert len(drop) == 1 and drop[0].apply(go).splitlines()[2] == "\t\treturn 0, nil"
+
+
+def test_two_per_line_prefers_distinct_operators():
+    src = "def f(a, b):\n    if a > b:\n        return 1\n"
+    chosen = muts(src, ".py", lines={2}, per_line=2)
+    assert len(chosen) == 2 and len({m.operator for m in chosen}) == 2

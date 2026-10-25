@@ -1,0 +1,30 @@
+{
+  "task": "shipping",
+  "arm": "A",
+  "rep": 0,
+  "exit": 0,
+  "seconds": 30.2,
+  "cost_usd": 0.20955300000000004,
+  "turns": 10,
+  "hook_rounds": 0,
+  "final_message": "I implemented `shipping_cost` in `shipping.py` and added tests in `test_shipping.py`. All 26 tests pass.\n\n- **Order of checks:** an unknown zone raises `ValueError` first, then a weight that isn't greater than 0. NaN is rejected too.\n- **Free parcels:** a domestic, non-express parcel of 0.5 kg or less returns `0.00`. Express domestic parcels and other zones are not free.\n- **Price:** the zone base price plus 2.00 for each started kilogram above the first. Express doubles the total, and the result is rounded to 2 decimals.\n- **Rounding up kilograms:** the weight goes through `Decimal(str(weight))` before `ceil`, so it rounds up on the value as written.\n- **Tests:** they cover each zone, the example weights from `TASK.md`, express, the free-parcel boundary at 0.5 and 0.51 kg, and the error cases.\n\nI first wrote a test for float noise (a sum like `0.1 + 0.2 + 2.7`). It didn't exercise the case I intended, because that sum comes out to exactly 3.0. I removed it rather than leave a misleading test.",
+  "impl_correct": true,
+  "tests_valid_on_reference": true,
+  "bugs_caught": {
+    "1_floor_kg": true,
+    "2_express_ignored_intl": true,
+    "3_free_threshold": true,
+    "4_unknown_zone_default": true,
+    "5_zero_weight_allowed": true
+  },
+  "bugs_caught_n": 5,
+  "bitecheck_score": 1.0,
+  "bitecheck_verdict": "warn",
+  "mutants": 8,
+  "red_flags": [
+    "SPECIAL_CASE_SUSPECT"
+  ],
+  "test_lines": 70,
+  "agent_tests": 26,
+  "agent_tests_failing_on_reference": []
+}

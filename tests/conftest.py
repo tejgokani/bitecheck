@@ -33,6 +33,7 @@ STRONG_TEST = (
     "    assert total([(-5, 1)]) == 0\n"
     "    assert total([(-5, 1)], 'HALF') == 0\n"
     "    assert total([(1, 1)], 'HALF') == 0.5\n"
+    "    assert total([(0.333, 1)]) == 0.33\n"
 )
 
 

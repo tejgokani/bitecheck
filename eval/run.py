@@ -274,6 +274,7 @@ def score(ws: Path, task: str) -> dict:
 
 
 def run_all(tasks: list[str], arms: list[str], reps: int, out: Path, parallel: int) -> None:
+    out = out.resolve()  # hooks run with the workspace as cwd: every path handed to them must be absolute
     out.mkdir(parents=True, exist_ok=True)
     jobs = [(t, a, r) for r in range(reps) for t in tasks for a in arms]
 

@@ -34,7 +34,7 @@ class Config:
     mutant_timeout_factor: float = 3.0
     min_mutant_timeout: float = 10.0
     jobs: int = 0  # 0 = auto
-    per_line: int = 1
+    per_line: int = 2
     max_mutants: int = 80
     budget: float = 0.0  # seconds for the whole mutation phase; 0 = unlimited
     min_score: float = 0.8

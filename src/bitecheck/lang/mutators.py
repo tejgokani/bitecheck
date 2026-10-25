@@ -102,7 +102,15 @@ def select(mutants: list[Mutant], per_line: int) -> list[Mutant]:
         by_line.setdefault((m.path, m.line), []).append(m)
     chosen = []
     for key in sorted(by_line):
-        chosen += sorted(by_line[key], key=lambda m: (m.rank, m.start))[:per_line]
+        picked, ops = [], set()
+        for m in sorted(by_line[key], key=lambda m: (m.rank, m.start)):
+            if m.operator in ops:
+                continue  # prefer different kinds of breakage on the same line
+            picked.append(m)
+            ops.add(m.operator)
+            if len(picked) == per_line:
+                break
+        chosen += picked
     return chosen
 
 
@@ -252,6 +260,9 @@ def _python_stmt_mutants(path: str, text: str, lines: set[int]) -> list[Mutant]:
         if isinstance(node, ast.Expr) and isinstance(node.value, (ast.Call, ast.Await)):
             s, e = span(node)
             out.append(Mutant(path, node.lineno, s, e, "pass", "remove-call", R_STMT, text[s:e]))
+        elif isinstance(node, ast.Raise):
+            s, e = span(node)
+            out.append(Mutant(path, node.lineno, s, e, "pass", "remove-raise", R_STMT, text[s:e]))
         elif isinstance(node, ast.AugAssign):
             s, e = span(node)
             out.append(Mutant(path, node.lineno, s, e, "pass", "remove-statement", R_STMT, text[s:e]))
@@ -294,6 +305,9 @@ _NON_CALL_START = re.compile(
 _IF_PAREN = re.compile(r"^(\s*(?:\}\s*)?(?:else\s+)?if\s*)\((.*)\)(\s*\{?\s*)$")
 _IF_BARE = re.compile(r"^(\s*(?:\}\s*)?(?:else\s+)?if\s+)(.*?)(\s*\{\s*)$")
 _RETURN = re.compile(r"^(\s*return\s+)(.+?)(;?\s*)$")
+_THROW = re.compile(r"^(\s*)(throw\s+.+?;?)\s*$")
+_GO_ERR_RETURN = re.compile(r"^(\s*return\s+)(.*,\s*)((?:fmt\.Errorf|errors\.New|errors\.Join|err\b|[A-Za-z_][\w.]*Err\w*)\b.*?)\s*$")
+_RUBY_RAISE = re.compile(r"^(\s*)(raise\b.*?)\s*$")
 
 
 def _c_stmt_mutants(path: str, text: str, spec: LangSpec, lines: set[int]) -> list[Mutant]:
@@ -311,6 +325,27 @@ def _c_stmt_mutants(path: str, text: str, spec: LangSpec, lines: set[int]) -> li
             continue
         line = src_lines[ln - 1]
         base = offsets[ln - 1]
+        mt = _THROW.match(line)
+        if mt and spec.family in ("js", "java", "csharp", "php", "kotlin", "swift", "c") and _balanced(mt.group(2)):
+            s = base + len(mt.group(1))
+            e = base + len(line.rstrip())
+            out.append(Mutant(path, ln, s, e, ";" if spec.family != "kotlin" and spec.family != "swift" else "",
+                              "remove-raise", R_STMT, mt.group(2)))
+            continue
+        if spec.family == "go":
+            mg = _GO_ERR_RETURN.match(line)
+            if mg and _balanced(mg.group(3)) and _balanced(mg.group(2)) and mg.group(3).strip() != "nil":
+                s = base + len(mg.group(1)) + len(mg.group(2))
+                e = base + len(line.rstrip())
+                out.append(Mutant(path, ln, s, e, "nil", "drop-error", R_STMT, mg.group(3)))
+                continue
+        if spec.family == "ruby":
+            mr2 = _RUBY_RAISE.match(line)
+            if mr2:
+                s = base + len(mr2.group(1))
+                e = base + len(line.rstrip())
+                out.append(Mutant(path, ln, s, e, "nil", "remove-raise", R_STMT, mr2.group(2)))
+                continue
         m = _CALL_STMT.match(line)
         if m and not _NON_CALL_START.match(line) and _balanced(m.group(2)) and spec.family != "ruby":
             s = base + len(m.group(1))

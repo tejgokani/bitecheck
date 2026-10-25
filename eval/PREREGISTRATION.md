@@ -76,3 +76,19 @@ If arm B doesn't beat arm A, that will be reported as-is.
 **How runs 1–2 are reinterpreted.** Both arms ran the agent *without* bitecheck. They are reported as no-hook baselines, 12 tasks × 2 samples. They say nothing about the hook's effect.
 
 **What was fixed.** The harness now checks `arm.startswith("B")`. Before any further runs, it is smoke-tested by confirming the audit log is non-empty for an arm-B run.
+
+---
+
+# Disclosure: product change before run 3
+
+**What the smoke run showed.** A single smoke run of the fixed harness used the run-3 task `reserve`. The hook ran and passed an agent fix that had **no regression test**. Two mutation weaknesses caused this:
+
+- No operator removed a `raise`/`throw`.
+- One mutant per line chose condition negation, which the happy-path test kills.
+
+**What changed before run 3, without looking at the other three tasks:**
+
+1. Error-path operators were added: remove `raise`/`throw`, Go `return x, err` → `return x, nil`, and Ruby `raise` → `nil`. These are standard in mainstream mutation tools.
+2. The default `per_line` changed from 1 to 2, preferring two *different* operators per line.
+
+**Caveat.** Both changes were motivated by a run-3 task, so `reserve` results are reported with that caveat. `bizdays`, `slug` and `port` had not been run by any agent before these changes.
