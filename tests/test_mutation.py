@@ -157,10 +157,11 @@ def test_javascript_node_test(tmp_path):
                               "  if (t > 100) {\n    return t - 5;\n  }\n  return t;\n}\n"})
     _, doc = check_json(repo, "--probes", "mutants", cmd="node --test")
     m = probe(doc, "mutants")["mutation"]
-    by_line = {x["line"]: x["status"] for x in m["mutants"]}
-    assert by_line[3] == "killed"  # negating the guard sends price(10) into the discount branch
-    assert by_line[4] == "survived"  # but the discount itself is never checked
-    assert by_line[6] == "killed"  # `return t` → `return undefined` breaks price(10) == 10
+    st = {(x["line"], x["operator"]): x["status"] for x in m["mutants"]}
+    assert st[(3, "negate-condition")] == "killed"  # negating the guard sends price(10) into the discount branch
+    assert st[(3, "change-constant")] == "survived"  # but the 100 threshold itself is never checked
+    assert all(v == "survived" for (ln, _), v in st.items() if ln == 4)  # nor is the discount
+    assert st[(6, "return-none")] == "killed"  # `return t` → `return undefined` breaks price(10) == 10
 
 
 @needs_go

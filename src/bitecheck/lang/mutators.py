@@ -45,7 +45,18 @@ def _short(s: str, n: int = 60) -> str:
 
 
 # Operator ranks (lower = stronger, tried first).
-R_STMT, R_RETURN, R_NEGATE_COND, R_LOGIC, R_CMP, R_ARITH, R_BOOL, R_NUMBER, R_BOUNDARY, R_INCDEC = range(10)
+R_STMT, R_RETURN, R_NEGATE_COND, R_LOGIC, R_CMP, R_REGEX, R_ARITH, R_BOOL, R_NUMBER, R_BOUNDARY, R_INCDEC = range(11)
+
+# Operators that break a line in the *same way*. With per_line > 1 the picks come
+# from different families: negating `x < 5` twice tells you nothing new, while
+# negating it AND changing 5 to 6 checks both the branch and its threshold.
+FAMILY = {
+    "negate-condition": "invert", "negate-comparison": "invert", "remove-negation": "invert",
+    "swap-logical": "logic", "boundary": "boundary", "swap-arithmetic": "arith", "swap-increment": "arith",
+    "change-constant": "constant", "swap-boolean": "boolean", "remove-call": "statement",
+    "remove-statement": "statement", "remove-raise": "error", "drop-error": "error", "return-none": "return",
+    "regex-quantifier": "regex-quantifier", "regex-anchor": "regex-anchor", "regex-class": "regex-class",
+}
 
 _CMP_FLIP = {"==": "!=", "!=": "==", "===": "!==", "!==": "===", "<": ">=", ">=": "<", ">": "<=", "<=": ">"}
 _BOUNDARY = {"<": "<=", "<=": "<", ">": ">=", ">=": ">"}
@@ -102,12 +113,13 @@ def select(mutants: list[Mutant], per_line: int) -> list[Mutant]:
         by_line.setdefault((m.path, m.line), []).append(m)
     chosen = []
     for key in sorted(by_line):
-        picked, ops = [], set()
+        picked, fams = [], set()
         for m in sorted(by_line[key], key=lambda m: (m.rank, m.start)):
-            if m.operator in ops:
+            fam = FAMILY.get(m.operator, m.operator)
+            if fam in fams:
                 continue  # prefer different kinds of breakage on the same line
             picked.append(m)
-            ops.add(m.operator)
+            fams.add(fam)
             if len(picked) == per_line:
                 break
         chosen += picked
@@ -192,6 +204,10 @@ def _token_mutants(path: str, toks: list[Token], spec: LangSpec, lines: set[int]
                 out.append(Mutant(path, t.line, t.start, end, "", "remove-negation", R_NEGATE_COND, t.text + " "))
             elif spec.family == "python" and x == "in" and prev is not None and prev.text == "not":
                 pass
+        elif t.kind == "regex" or (t.kind == "string" and spec.family == "python" and _is_python_regex(sig, i)):
+            for start, end, repl, op in _regex_mutations(t.text, python=t.kind == "string"):
+                mutated = t.text[:start] + repl + t.text[end:]  # show the whole regex, before and after
+                out.append(Mutant(path, t.line, t.start, t.end, mutated, op, R_REGEX, t.text))
         elif t.kind == "number":
             v = _int_value(t.text)
             if v is None or _is_attr(prev) or (prev is not None and prev.text in ("[",) and nxt and nxt.text in ("]", ":")):
@@ -200,6 +216,63 @@ def _token_mutants(path: str, toks: list[Token], spec: LangSpec, lines: set[int]
                 continue  # negative literal
             repl = "1" if v == 0 else "0" if v == 1 else str(v + 1)
             mk(repl, "change-constant", R_NUMBER)
+    return out
+
+
+_PY_RE_FUNCS = {"compile", "match", "search", "fullmatch", "sub", "subn", "findall", "finditer", "split"}
+
+
+def _is_python_regex(sig: list[Token], i: int) -> bool:
+    """`re.<fn>(<this string>` — the first argument of a re function."""
+    return (i >= 4 and sig[i - 1].text == "(" and sig[i - 2].text in _PY_RE_FUNCS and sig[i - 3].text == "."
+            and sig[i - 4].text == "re")
+
+
+def _regex_mutations(tok: str, python: bool) -> list[tuple[int, int, str, str]]:
+    """(start, end, replacement, operator) edits inside one regex token's body.
+
+    One edit per kind: drop the first quantifier, drop an anchor, invert the
+    first character class. Positions are relative to the token text.
+    """
+    if python:
+        q = tok.lstrip("rRbBuUfF")
+        prefix = len(tok) - len(q)
+        if q[:3] in ('"""', "\'\'\'"):
+            return []
+        body_start, body_end = prefix + 1, len(tok) - 1
+    else:
+        if not tok.startswith("/"):
+            return []
+        body_start, body_end = 1, tok.rfind("/")
+    body = tok[body_start:body_end]
+    out: list[tuple[int, int, str, str]] = []
+    in_class, i, q_done, cls_done = False, 0, False, False
+    while i < len(body):
+        ch = body[i]
+        if ch == "\\":
+            i += 2
+            continue
+        if ch == "[" and not in_class:
+            in_class = True
+            if not cls_done:
+                if body[i + 1:i + 2] == "^":
+                    out.append((body_start + i + 1, body_start + i + 2, "", "regex-class"))
+                else:
+                    out.append((body_start + i + 1, body_start + i + 1, "^", "regex-class"))
+                cls_done = True
+        elif ch == "]" and in_class:
+            in_class = False
+        elif not in_class and ch in "+*?" and i > 0 and not q_done and body[i - 1] not in "(|":
+            if ch == "?" and body[i - 1] in "+*?}":
+                i += 1
+                continue  # lazy modifier, not a quantifier
+            out.append((body_start + i, body_start + i + 1, "", "regex-quantifier"))
+            q_done = True
+        i += 1
+    if body.startswith("^"):
+        out.append((body_start, body_start + 1, "", "regex-anchor"))
+    elif body.endswith("$") and not body.endswith("\\$"):
+        out.append((body_start + len(body) - 1, body_start + len(body), "", "regex-anchor"))
     return out
 
 

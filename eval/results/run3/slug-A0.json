@@ -1,0 +1,36 @@
+{
+  "task": "slug",
+  "arm": "A",
+  "rep": 0,
+  "model": "default",
+  "tasks": "tasks3",
+  "exit": 0,
+  "seconds": 26.5,
+  "cost_usd": 0.17732610000000001,
+  "turns": 9,
+  "hook_runs": 0,
+  "hook_blocks": 0,
+  "hook_rounds": 0,
+  "final_message": "`slugify(\"  Hello -- World! \")` now returns `\"hello-world\"`, and all 3 tests pass under `node --test`.\n\nThe bug was in `slug.mjs`, where each non-alphanumeric character became its own dash. I changed the replace to treat a whole run of such characters as one separator (`/[^a-z0-9]+/g`). I then added a second replace that strips any leading or trailing dash.\n\nI also added a regression test for your example input in `slug.test.mjs`.",
+  "impl_correct": true,
+  "agent_test_files": [
+    "slug.test.mjs"
+  ],
+  "agent_tests": 3,
+  "agent_tests_failing_on_reference": [],
+  "tests_valid_on_reference": true,
+  "bugs_caught": {
+    "1_original_bug": true,
+    "2_no_collapse": true,
+    "3_only_leading_trimmed": true,
+    "4_only_trailing_trimmed": true
+  },
+  "bugs_caught_n": 4,
+  "bugs_total": 4,
+  "regression_protected": true,
+  "bitecheck_score": null,
+  "bitecheck_verdict": "ok",
+  "mutants": 0,
+  "red_flags": [],
+  "test_lines": 15
+}

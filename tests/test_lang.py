@@ -177,3 +177,23 @@ def test_two_per_line_prefers_distinct_operators():
     src = "def f(a, b):\n    if a > b:\n        return 1\n"
     chosen = muts(src, ".py", lines={2}, per_line=2)
     assert len(chosen) == 2 and len({m.operator for m in chosen}) == 2
+
+
+def test_regex_mutations_js_and_python():
+    js = "export const slug = (t) => t.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');\n"
+    reps = sorted((m.operator, m.apply(js).split("=>")[1].strip()) for m in muts(js, ".js") if m.operator.startswith("regex"))
+    joined = " ".join(r for _, r in reps)
+    assert "/[a-z0-9]+/g" in joined          # class inverted
+    assert "/[^a-z0-9]/g" in joined          # quantifier dropped
+    assert "/-+|-+$/g" in joined             # anchor dropped
+    py = 'import re\nWORD = re.compile(r"^[a-z]+$")\nx = "not a [regex]+"\n'
+    ops = {(m.line, m.operator) for m in muts(py, ".py")}
+    assert (2, "regex-anchor") in ops and (2, "regex-quantifier") in ops
+    assert not any(line == 3 for line, _ in ops)  # ordinary strings untouched
+
+
+def test_per_line_picks_distinct_families():
+    src = "def f(d):\n    if d.weekday() < 5:\n        return 1\n"
+    chosen = muts(src, ".py", lines={2}, per_line=2)
+    fams = {mutators.FAMILY[m.operator] for m in chosen}
+    assert fams == {"invert", "constant"} or fams == {"invert", "boundary"}, chosen

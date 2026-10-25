@@ -1,0 +1,36 @@
+{
+  "task": "reserve",
+  "arm": "B",
+  "rep": 1,
+  "model": "default",
+  "tasks": "tasks3",
+  "exit": 0,
+  "seconds": 38.7,
+  "cost_usd": 0.20438099999999995,
+  "turns": 12,
+  "hook_runs": 2,
+  "hook_blocks": 1,
+  "hook_rounds": 1,
+  "final_message": "I added two tests to `test_inventory.py` to cover the `raise InsufficientStock(item)` line the hook flagged. All 5 tests pass now. I didn't re-run the bitecheck mutation step, so I haven't confirmed the mutant is now caught.\n\n- **Over-reserve:** reserving 10 apples with 5 in stock raises `InsufficientStock`. `available(\"apple\")` stays at 5, so nothing was reserved.\n- **Exact amount:** reserving exactly 5 of 5 succeeds and `available` drops to 0. Reserving one more then raises `InsufficientStock`.\n\nThe `raise` \u2192 `pass` mutant should now fail the over-reserve test. I also imported `InsufficientStock` into the test file.",
+  "impl_correct": true,
+  "agent_test_files": [
+    "test_inventory.py"
+  ],
+  "agent_tests": 5,
+  "agent_tests_failing_on_reference": [],
+  "tests_valid_on_reference": true,
+  "bugs_caught": {
+    "1_original_bug": true,
+    "2_exact_amount_rejected": true,
+    "3_reserves_before_check": true,
+    "4_ignores_existing_reservations": true
+  },
+  "bugs_caught_n": 4,
+  "bugs_total": 4,
+  "regression_protected": true,
+  "bitecheck_score": 1.0,
+  "bitecheck_verdict": "ok",
+  "mutants": 3,
+  "red_flags": [],
+  "test_lines": 39
+}

@@ -140,18 +140,19 @@ This writes a job summary, uploads SARIF so unchecked lines show up inline in th
 ## How the mutation engine works
 
 - **Diff-scoped.** Only lines the change added or modified are mutated. The cost scales with the size of the diff, not the codebase.
-- **One strong mutant per line by default.** Operators are ranked by how rarely they produce equivalent mutants:
+- **Two different kinds of breakage per line by default.** Operators are ranked by how rarely they produce equivalent mutants:
   1. Remove a call statement.
-  2. `return x` → `return None`.
-  3. Negate a condition.
-  4. Swap `&&`/`||`.
-  5. Flip a comparison.
-  6. Swap arithmetic.
-  7. Flip a boolean.
-  8. Change a constant.
-  9. Move a boundary.
+  2. Remove a `raise`/`throw`, or drop a Go `err` return.
+  3. `return x` → `return None`.
+  4. Negate a condition.
+  5. Swap `&&`/`||`.
+  6. Flip a comparison.
+  7. Swap arithmetic.
+  8. Flip a boolean.
+  9. Change a constant.
+  10. Move a boundary.
 
-  `--per-line 0` runs every operator.
+  Each line gets its two strongest *distinct* operators. A negated `if` alone is often killed by the happy path; pairing it with a boundary or error-path mutant checks what the change was for. `--per-line 1` is cheaper; `--per-line 0` runs every operator.
 - **Lexers that know what isn't code.** Strings, template literals with nested `${}`, raw strings (`r#"…"#`, Go backticks, C# `@"…"`), triple-quoted strings, comments, JS regex literals, Rust lifetimes vs char literals and Ruby symbols are never mutated. Generics (`Map<string, Array<number>>`), unary operators, pointer derefs, Rust macros, string concatenation, `%` formatting and logging lines are left alone.
 - **Invalid ≠ killed.** A mutant that doesn't compile proves nothing about your tests:
   - Python mutants are pre-checked with `compile()`.
@@ -170,7 +171,7 @@ check_cmd = ""                   # e.g. "go vet ./..." or "npx tsc --noEmit" to 
 junit = "report.xml"             # optional per-test detail
 min_score = 0.8                  # gate: share of deliberately broken changed lines the tests must catch
 max_mutants = 80                 # 0 = no cap
-per_line = 1                     # 0 = every operator
+per_line = 2                     # distinct operators per changed line; 0 = every operator
 jobs = 0                         # 0 = auto
 budget = 0                       # seconds for the mutation phase; 0 = unlimited
 probes = ["mutants", "goalpost", "claims", "tamper", "deps"]
