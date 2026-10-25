@@ -1,0 +1,1 @@
+{"impl": "stats.go", "tests": ["stats_test.go"], "cmd": "go test ./...", "lang": "go"}

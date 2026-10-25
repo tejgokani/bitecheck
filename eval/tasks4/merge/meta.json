@@ -1,0 +1,1 @@
+{"impl": "config.py", "tests": ["test_config.py"], "cmd": ".venv/bin/python -m pytest -q -p no:cacheprovider", "lang": "python"}

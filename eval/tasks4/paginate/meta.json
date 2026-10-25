@@ -1,0 +1,1 @@
+{"impl": "pages.py", "tests": ["test_pages.py"], "cmd": ".venv/bin/python -m pytest -q -p no:cacheprovider", "lang": "python"}

@@ -1,0 +1,1 @@
+{"impl": "bytes.mjs", "tests": ["bytes.test.mjs"], "cmd": "node --test", "lang": "js"}

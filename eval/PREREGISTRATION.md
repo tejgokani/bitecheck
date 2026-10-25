@@ -92,3 +92,26 @@ If arm B doesn't beat arm A, that will be reported as-is.
 2. The default `per_line` changed from 1 to 2, preferring two *different* operators per line.
 
 **Caveat.** Both changes were motivated by a run-3 task, so `reserve` results are reported with that caveat. `bizdays`, `slug` and `port` had not been run by any agent before these changes.
+
+---
+
+# Run 4 pre-registration: out-of-sample (written before any agent or bitecheck run on these tasks)
+
+**Run 3 results** (bitecheck commit with error-path operators). Arm A: regression-protected 2/8, held-out 10/32. Arm B: 4/8, 17/32. Where the hook blocked (port, reserve), the agent added a regression test in 4 of 4 runs. Where it didn't block, there were two product gaps:
+
+- **bizdays:** the two per-line picks were the same kind of breakage (negation twice).
+- **slug:** the fix lived entirely in a regex literal, which nothing mutated.
+
+Both were fixed with operator families and regex operators. Because those fixes were motivated by run-3 tasks, run 3 can't validate them. Run 4 can.
+
+**Design.**
+
+- **Tasks:** 6 new bug-fix tasks written after those fixes, never run by any agent and never checked with bitecheck: paginate (Python), merge (Python, recursion), bytes (JavaScript), query (JavaScript, parsing), truncate (Go, Unicode), median (Go).
+- **Everything else unchanged from run 3:** the issue-only prompt with no mention of tests, the default model, 2 repetitions, arm A vs arm B, and the same metrics.
+
+**Expectations.**
+
+1. Arm B is regression-protected in more runs than arm A.
+2. Arm B catches more held-out bugs in total.
+3. Fix correctness is the same in both arms (±1 run).
+4. Arm B's median wall time is under 3× arm A's.
