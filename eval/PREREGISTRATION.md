@@ -130,3 +130,7 @@ All four expectations held. Where B did not improve (`bytes`), its mutation scor
 **Why.** Runs 1–2 never tested arm B because of the harness bug. This reruns **arm B only** for the run-2 setup (greenfield tasks, "Add tests.", `claude-haiku-5-5`, 2 repetitions) and compares against the existing run-2 arm-A data.
 
 **Expectation.** No meaningful difference. Arm A already caught 40/40 held-out bugs, a ceiling. This mainly checks that the hook does not make greenfield work worse or much slower.
+
+## Run 2b outcome
+
+**Aborted, no data.** Every agent session ended after about 6 seconds with zero API calls and $0 cost: the account had reached its usage limit. The results were discarded. The question "does the hook change greenfield results?" remains untested.

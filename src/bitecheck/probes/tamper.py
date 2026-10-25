@@ -192,7 +192,10 @@ def _lowered_thresholds(d: git.FileDiff) -> list[str]:
     return out
 
 
-_BODY_LITERAL = re.compile(r"(?:\breturn\b|=>|(?<![=!<>])=(?!=))\s*(?P<lit>\"[^\"\\]{1,40}\"|'[^'\\]{1,40}'|-?\d+(?:\.\d+)?|True|False|true|false)\s*[;,)]?\s*$")
+_BODY_LITERAL = re.compile(
+    r"(?:\breturn\b|=>|(?<![=!<>])=(?!=))\s*"
+    r"(?P<lit>\"[^\"\\]{1,40}\"|'[^'\\]{1,40}'|-?\d+(?:\.\d+)?|True|False|true|false)\s*[;,)]?\s*$"
+)
 
 
 def _special_cases(diffs: list[git.FileDiff], test_paths: set[str], test_text: list[str]) -> list[str]:
